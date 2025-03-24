@@ -58,14 +58,10 @@ jobs:
         run: |
           source venv/bin/activate
           echo "PYTHONPATH=." >> $GITHUB_ENV
-          echo "VIRTUAL_ENV=$(pwd)/venv" >> $GITHUB_ENV
-          echo "$(pwd)/venv/bin" >> $GITHUB_PATH
 
       - name: Run pylint
         run: |
-          ls -la
-          ls -la app/ 
-          pip freeze
+          ls -la venv/bin/
           cd app/
           python -m pylint ./ 
           cd -
