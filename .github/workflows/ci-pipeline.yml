@@ -54,18 +54,16 @@ jobs:
           path: venv
           key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
 
-      - name: Activate virtual environment
-        run: |
-          . venv/bin/activate
-
       - name: Run pylint
         run: |
+          . venv/bin/activate
           cd app/
           python -m pylint ./ 
           cd -
 
       - name: Run flake8
         run: |
+          . venv/bin/activate
           cd app/ 
           python -m flake8 ./ 
           cd -
