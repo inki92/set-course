@@ -1,0 +1,103 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - feature
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  setup:
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment variables
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+
+      - name: Install Python 3.12
+        run: |
+          sudo apt -y update
+          sudo apt install -y python3.12 python3.12-venv python3.12-dev
+
+      - name: Setup virtual environment
+        run: |
+          python3.12 -m venv venv
+          echo "VIRTUAL_ENV=$(pwd)/venv" >> $GITHUB_ENV
+          echo "$(pwd)/venv/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install -r app/requirements.txt
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+
+  linting:
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+
+      - name: Activate virtual environment
+        run: source venv/bin/activate
+
+      - name: Run pylint
+        run: |
+          cd app/ 
+          python -m pylint ./ 
+          cd -
+
+      - name: Run flake8
+        run: |
+          cd app/ 
+          python -m flake8 ./ 
+          cd -
+
+  testing:
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+
+      - name: Activate virtual environment
+        run: source venv/bin/activate
+
+      - name: Run unit tests with coverage
+        run: |
+          cd app/
+          python -m pytest tests/unit/ --cov=app --cov-report=xml --junitxml=pytest-report.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: app/pytest-report.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: app/coverage.xml
