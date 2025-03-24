@@ -57,17 +57,20 @@ jobs:
       - name: Run pylint
         run: |
           . venv/bin/activate
-          venv/bin/python -m pylint app/ --output-format=text > pylint-report.txt
+          venv/bin/python -m pylint app/ --output-format=text > pylint-report.txt || echo "Pylint failed, but continuing" && echo "STATUS_FAIL=1" >> $GITHUB_ENV
 
       - name: Run flake8
         run: |
           . venv/bin/activate
-          venv/bin/python -m flake8 app/ --output-file=flake8-report.txt
+          venv/bin/python -m flake8 app/ --output-file=flake8-report.txt || echo "Flake8 failed, but continuing" && echo "STATUS_FAIL=1" >> $GITHUB_ENV
 
       - name: Upload linting results to S3
         run: |
           aws s3 cp pylint-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/pylint-report.txt
           aws s3 cp flake8-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/flake8-report.txt
+
+      - name: Status check
+        run: [ "$STATUS_FAIL" -eq 0 ] && exit 1 || true
 
   unit-tests:
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
