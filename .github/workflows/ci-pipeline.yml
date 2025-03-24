@@ -54,12 +54,12 @@ jobs:
       - name: Run pylint
         run: |
           . venv/bin/activate
-          venv/bin/python -m pylint app/ --output-format=text > pylint-report.txt || echo "Pylint failed, but continuing" && echo "STATUS_FAIL=1" >> $GITHUB_ENV
+          venv/bin/python -m pylint app/ --output-format=text > pylint-report.txt || echo "STATUS_FAIL=1" >> $GITHUB_ENV
 
       - name: Run flake8
         run: |
           . venv/bin/activate
-          venv/bin/python -m flake8 app/ --output-file=flake8-report.txt || echo "Flake8 failed, but continuing" && echo "STATUS_FAIL=1" >> $GITHUB_ENV
+          venv/bin/python -m flake8 app/ --output-file=flake8-report.txt || echo "STATUS_FAIL=1" >> $GITHUB_ENV
 
       - name: Upload linting results to S3
         run: |
