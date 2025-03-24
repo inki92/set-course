@@ -57,42 +57,42 @@ jobs:
       - name: Run pylint
         run: |
           . venv/bin/activate
-          venv/bin/python -m pylint ./ 
+          venv/bin/python -m pylint app/
 
       - name: Run flake8
         run: |
           . venv/bin/activate
-          venv/bin/python/python -m flake8 ./ 
+          venv/bin/python/python -m flake8 app/
 
-#  testing:
-#    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-#    needs: setup
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Restore cached dependencies
-#        uses: actions/cache@v3
-#        with:
-#          path: venv
-#          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
-#
-#      - name: Activate virtual environment
-#        run: source venv/bin/activate
-#
-#      - name: Run unit tests with coverage
-#        run: |
-#          cd app/
-#          python -m pytest tests/unit/ --cov=app --cov-report=xml --junitxml=pytest-report.xml
-#
-#      - name: Upload test results
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: test-results
-#          path: app/pytest-report.xml
-#
-#      - name: Upload coverage report
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: coverage-report
-#          path: app/coverage.xml
+  testing:
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+
+      - name: Set environment variables
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+
+      - name: Run unit tests with coverage
+        run: |
+          . venv/bin/activate
+          venv/bin/python -m pytest app/tests/unit/ --cov=app --cov-report=xml --junitxml=pytest-report.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: pytest-report.xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.xml
