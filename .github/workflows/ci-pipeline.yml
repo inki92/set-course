@@ -1,0 +1,107 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  setup:
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment variables
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+
+      - name: Install Python 3
+        run: |
+          sudo apt -y update
+          sudo apt install -y python3 python3-virtualenv
+
+      - name: Setup virtual environment
+        run: |
+          python3 -m venv venv
+          echo "VIRTUAL_ENV=$(pwd)/venv" >> $GITHUB_ENV
+          echo "$(pwd)/venv/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          . venv/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install -r app/requirements.txt
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+
+  linting:
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+
+      - name: Run pylint
+        run: |
+          . venv/bin/activate
+          venv/bin/python -m pylint app/ --output-format=text > pylint-report.txt || echo "Pylint failed, but continuing" && echo "STATUS_FAIL=1" >> $GITHUB_ENV
+
+      - name: Run flake8
+        run: |
+          . venv/bin/activate
+          venv/bin/python -m flake8 app/ --output-file=flake8-report.txt || echo "Flake8 failed, but continuing" && echo "STATUS_FAIL=1" >> $GITHUB_ENV
+
+      - name: Upload linting results to S3
+        run: |
+          aws s3 cp pylint-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/pylint-report.txt
+          aws s3 cp flake8-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/flake8-report.txt
+
+      - name: Status of linting check
+        run: |
+          if [ "$STATUS_FAIL" -eq 1 ]; then 
+            exit 1
+          else
+            exit 0
+          fi
+
+  unit-tests:
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    needs: linting
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore cached dependencies
+        uses: actions/cache@v3
+        with:
+          path: venv
+          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+
+      - name: Set environment variables
+        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+
+      - name: Run unit tests with coverage
+        run: |
+          . venv/bin/activate
+          venv/bin/python -m pytest -v app/tests/unit/ --cov=app --cov-report=html --cov-report=xml --html=pytest-report.html --junitxml=pytest-report.xml
+
+      - name: Upload test results to S3
+        run: |
+          aws s3 cp pytest-report.xml s3://set-cicd-artifacts/unit-test-results/${{ github.run_id }}/pytest-report.xml
+          aws s3 cp pytest-report.html s3://set-cicd-artifacts/unit-test-results/${{ github.run_id }}/pytest-report.html
+
+      - name: Upload coverage report to S3
+        run: |
+          aws s3 cp coverage.xml s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/coverage.xml
+          aws s3 cp htmlcov/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/htmlcov/ --recursive
+          aws s3 cp assets/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/assets/ --recursive
