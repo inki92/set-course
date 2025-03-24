@@ -60,8 +60,8 @@ jobs:
       - name: Run pylint
         run: |
           cd app/ 
-          pip freeze
-          python -m pylint ./ 
+          ../venv/bin/pip freeze
+          ../venv/bin/python -m pylint ./ 
           cd -
 
       - name: Run flake8
