@@ -83,7 +83,7 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           . venv/bin/activate
-          venv/bin/pytest -v app/tests/unit/ --cov=app --cov-report=html --cov-report=xml --html=pytest-report.html --junitxml=pytest-report.xml
+          venv/bin/python -m pytest -v app/tests/unit/ --cov=app --cov-report=html --cov-report=xml --html=pytest-report.html --junitxml=pytest-report.xml
 
       - name: Upload test results to S3
         run: |
