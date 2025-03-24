@@ -62,11 +62,11 @@ jobs:
       - name: Run flake8
         run: |
           . venv/bin/activate
-          venv/bin/python/python -m flake8 app/
+          venv/bin/python -m flake8 app/
 
-  testing:
+  unit-tests:
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-    needs: setup
+    needs: linting
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
