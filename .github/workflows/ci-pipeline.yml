@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          source venv/bin/activate
+          . venv/bin/activate
           python -m pip install --upgrade pip
           python -m pip install -r app/requirements.txt
 
@@ -56,12 +56,10 @@ jobs:
 
       - name: Activate virtual environment
         run: |
-          source venv/bin/activate
-          echo "PYTHONPATH=." >> $GITHUB_ENV
+          . venv/bin/activate
 
       - name: Run pylint
         run: |
-          ls -la venv/bin/
           cd app/
           python -m pylint ./ 
           cd -
