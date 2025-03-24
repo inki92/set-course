@@ -70,7 +70,12 @@ jobs:
           aws s3 cp flake8-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/flake8-report.txt
 
       - name: Status check
-        run: [ "$STATUS_FAIL" -eq 0 ] && exit 1 || true
+        run: |
+          if [ "$STATUS_FAIL" -eq 1 ]; then 
+            exit 1
+          else
+            exit 0
+          fi
 
   unit-tests:
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
