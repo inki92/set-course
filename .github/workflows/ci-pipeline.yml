@@ -85,14 +85,8 @@ jobs:
           . venv/bin/activate
           venv/bin/python -m pytest app/tests/unit/ --cov=app --cov-report=xml --junitxml=pytest-report.xml
 
-#      - name: Upload test results
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: test-results
-#          path: pytest-report.xml
-#
-#      - name: Upload coverage report
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: coverage-report
-#          path: coverage.xml
+      - name: Upload test results to S3
+        run: aws s3 cp pytest-report.xml s3://set-cicd-artifacts/test-results/${{ github.run_id }}/pytest-report.xml
+
+      - name: Upload coverage report to S3
+        run: aws s3 cp coverage.xml s3://set-cicd-artifacts/coverage-reports/${{ github.run_id }}/coverage.xml
