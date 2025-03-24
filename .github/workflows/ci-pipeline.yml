@@ -83,10 +83,15 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           . venv/bin/activate
-          venv/bin/python -m pytest app/tests/unit/ --cov=app --cov-report=xml --junitxml=pytest-report.xml
+          venv/bin/pytest -v app/tests/unit/ --cov=app --cov-report=html --cov-report=xml --html=pytest-report.html --junitxml=pytest-report.xml
 
       - name: Upload test results to S3
-        run: aws s3 cp pytest-report.xml s3://set-cicd-artifacts/test-results/${{ github.run_id }}/pytest-report.xml
+        run: |
+          aws s3 cp pytest-report.xml s3://set-cicd-artifacts/unit-test-results/${{ github.run_id }}/pytest-report.xml
+          aws s3 cp coverage.xml s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/pytest-report.html
 
       - name: Upload coverage report to S3
-        run: aws s3 cp coverage.xml s3://set-cicd-artifacts/coverage-reports/${{ github.run_id }}/coverage.xml
+        run: |
+          aws s3 cp coverage.xml s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/coverage.xml
+          aws s3 cp htmlcov/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/htmlcov/ --recursive
+          aws s3 cp assets/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/assets/ --recursive
