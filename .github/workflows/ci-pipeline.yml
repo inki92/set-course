@@ -55,13 +55,19 @@ jobs:
           key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
 
       - name: Activate virtual environment
-        run: source venv/bin/activate
+        run: |
+          source venv/bin/activate
+          echo "PYTHONPATH=." >> $GITHUB_ENV
+          echo "VIRTUAL_ENV=$(pwd)/venv" >> $GITHUB_ENV
+          echo "$(pwd)/venv/bin" >> $GITHUB_PATH
 
       - name: Run pylint
         run: |
-          cd app/ 
-          ../venv/bin/pip freeze
-          ../venv/bin/python -m pylint ./ 
+          ls -la
+          ls -la app/ 
+          pip freeze
+          cd app/
+          python -m pylint ./ 
           cd -
 
       - name: Run flake8
