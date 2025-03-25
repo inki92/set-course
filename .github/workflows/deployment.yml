@@ -35,7 +35,7 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t $IMAGE_REPO_NAME app
-          docker tag $IMAGE_REPO_NAME:latest $DOCKER_IMAGE
+          docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
 
   push-image:
     name: Push Docker Image to Amazon ECR
@@ -61,19 +61,21 @@ jobs:
       - name: Upload imagedefinitions.json to S3
         run: aws s3 cp imagedefinitions.json s3://$S3_BUCKET_ARTIFACTS/imagedefinitions.json
 
-  package-upload-lambda:
-    name: Package and Upload Lambda
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+#  package-upload-lambda:
+#    name: Package and Upload Lambda
+#    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v4
+#
+#      - name: Zip Lambda function
+#        run: zip lambda_function_payload.zip lambda/index.py
+#
+#      - name: Upload Lambda function to S3
+#        run: aws s3 cp lambda_function_payload.zip s3://$S3_BUCKET_ARTIFACTS/image-recognition-lambda/
 
-      - name: Zip Lambda function
-        run: zip lambda_function_payload.zip lambda/index.py
 
-      - name: Upload Lambda function to S3
-        run: aws s3 cp lambda_function_payload.zip s3://$S3_BUCKET_ARTIFACTS/image-recognition-lambda/
-
+####not tested
 #  deploy-lambda:
 #    name: Deploy Lambda Function
 #    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
