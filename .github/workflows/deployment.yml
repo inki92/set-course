@@ -21,7 +21,7 @@ env:
   IMAGE_TAG: "latest"
 
 jobs:
-  build-image:
+  build-push-image:
     name: Build Docker Image
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
@@ -31,19 +31,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
       - name: Build Docker image
         run: |
           docker build -t $IMAGE_REPO_NAME app
           docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
-
-  push-image:
-    name: Push Docker Image to Amazon ECR
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-    needs: build-image
-    steps:
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
       - name: Push Docker image to Amazon ECR
         run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
@@ -52,11 +47,6 @@ jobs:
         run: |
           printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest > imagedefinitions.json
 
-  upload-imagedefinitions:
-    name: Upload imagedefinitions.json to S3
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-    needs: push-image
-    steps:
       - name: Upload imagedefinitions.json to S3
         run: aws s3 cp imagedefinitions.json s3://$S3_BUCKET_ARTIFACTS/imagedefinitions.json
 
