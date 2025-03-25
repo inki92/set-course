@@ -21,59 +21,53 @@ env:
   IMAGE_TAG: "latest"
 
 jobs:
-  build-push-image:
-    name: Build and Publish Docker Image
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-      - name: Build Docker image
-        run: |
-          docker build -t $IMAGE_REPO_NAME app
-          docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
-
-      - name: Push Docker image to Amazon ECR
-        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
-
-      - name: Generate imagedefinitions.json
-        run: |
-          printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest > imagedefinitions.json
-
-      - name: Upload imagedefinitions.json to S3
-        run: aws s3 cp imagedefinitions.json s3://$S3_BUCKET_ARTIFACTS/imagedefinitions.json
-
-#  package-upload-lambda:
-#    name: Package and Upload Lambda
+# tested !!!!!
+#  build-push-image:
+#    name: Build and Publish Docker Image
 #    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
 #    steps:
 #      - name: Checkout repository
 #        uses: actions/checkout@v4
 #
-#      - name: Zip Lambda function
-#        run: zip lambda_function_payload.zip lambda/index.py
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v2
 #
-#      - name: Upload Lambda function to S3
-#        run: aws s3 cp lambda_function_payload.zip s3://$S3_BUCKET_ARTIFACTS/image-recognition-lambda/
-
-
-####not tested
-#  deploy-lambda:
-#    name: Deploy Lambda Function
-#    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-#    needs: package-upload-lambda
-#    steps:
-#      - name: Deploy Lambda function
+#      - name: Login to Amazon ECR
 #        run: |
-#          aws lambda update-function-code --function-name $LAMBDA_NAME --s3-bucket $S3_BUCKET_NAME --s3-key image-recognition-lambda/lambda_function.zip
+#          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 #
+#      - name: Build Docker image
+#        run: |
+#          docker build -t $IMAGE_REPO_NAME app
+#          docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+#
+#      - name: Push Docker image to Amazon ECR
+#        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+#
+#      - name: Generate imagedefinitions.json
+#        run: |
+#          printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest > imagedefinitions.json
+#
+#      - name: Upload imagedefinitions.json to S3
+#        run: aws s3 cp imagedefinitions.json s3://$S3_BUCKET_ARTIFACTS/imagedefinitions/imagedefinitions.json
+
+  upload-deploy-lambda:
+    name: Package and Upload Lambda
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Zip Lambda function
+        run: zip lambda_function_payload.zip lambda/index.py
+
+      - name: Upload Lambda function to S3
+        run: aws s3 cp lambda_function_payload.zip s3://$S3_BUCKET_ARTIFACTS/image-recognition-lambda/
+
+      - name: Deploy Lambda function
+        run: |
+          aws lambda update-function-code --function-name $LAMBDA_NAME_DEV --s3-bucket $S3_BUCKET_ARTIFACTS --s3-key image-recognition-lambda/lambda_function_payload.zip
+
 #  blue-green-deployment:
 #    name: Blue-Green Deployment on ECS Fargate
 #    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
