@@ -59,7 +59,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Zip Lambda function
-        run: zip lambda_function_payload.zip lambda/index.py
+        run: |
+          cd lambda/ 
+          zip lambda_function_payload.zip index.py
 
       - name: Upload Lambda function to S3
         run: aws s3 cp lambda_function_payload.zip s3://$S3_BUCKET_ARTIFACTS/image-recognition-lambda/
