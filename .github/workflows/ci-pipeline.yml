@@ -5,9 +5,16 @@ on:
     branches:
       - develop
 
+env:
+  CodeBuildRunner: "codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}"
+  S3_BUCKET: "set-cicd-artifacts"
+  UNIT_TEST_REPORTS: "unit-test-results"
+  TEST_COV_REPORTS: "test-coverage-reports"
+  LINT_REPORTS: "linting-results"
+
 jobs:
   setup:
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ${{ env.CodeBuildRunner }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,7 +46,7 @@ jobs:
           key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
 
   linting:
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ${{ env.CodeBuildRunner }}
     needs: setup
     steps:
       - name: Checkout code
@@ -63,8 +70,8 @@ jobs:
 
       - name: Upload linting results to S3
         run: |
-          aws s3 cp pylint-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/pylint-report.txt
-          aws s3 cp flake8-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/flake8-report.txt
+          aws s3 cp pylint-report.txt s3://${{ env.S3_BUCKET }}/${{ env.LINT_REPORTS }}/${{ github.run_id }}/pylint-report.txt
+          aws s3 cp flake8-report.txt s3://${{ env.S3_BUCKET }}/${{ env.LINT_REPORTS }}/${{ github.run_id }}/flake8-report.txt
 
       - name: Status of linting check
         run: |
@@ -75,7 +82,7 @@ jobs:
           fi
 
   unit-tests:
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ${{ env.CodeBuildRunner }}
     needs: linting
     steps:
       - name: Checkout code
@@ -97,11 +104,11 @@ jobs:
 
       - name: Upload test results to S3
         run: |
-          aws s3 cp pytest-report.xml s3://set-cicd-artifacts/unit-test-results/${{ github.run_id }}/pytest-report.xml
-          aws s3 cp pytest-report.html s3://set-cicd-artifacts/unit-test-results/${{ github.run_id }}/pytest-report.html
+          aws s3 cp pytest-report.xml s3://${{ env.S3_BUCKET }}/${{ env.UNIT_TEST_REPORTS }}/${{ github.run_id }}/pytest-report.xml
+          aws s3 cp pytest-report.html s3://${{ env.S3_BUCKET }}/${{ env.UNIT_TEST_REPORTS }}/${{ github.run_id }}/pytest-report.html
 
       - name: Upload coverage report to S3
         run: |
-          aws s3 cp coverage.xml s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/coverage.xml
-          aws s3 cp htmlcov/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/htmlcov/ --recursive
-          aws s3 cp assets/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/assets/ --recursive
+          aws s3 cp coverage.xml s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/coverage.xml
+          aws s3 cp htmlcov/ s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/htmlcov/ --recursive
+          aws s3 cp assets/ s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/assets/ --recursive
