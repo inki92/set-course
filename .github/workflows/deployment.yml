@@ -19,7 +19,6 @@ env:
   S3_BUCKET_ARTIFACTS: "set-cicd-artifacts"
   LAMBDA_NAME_DEV: "lambda_script_dev"
   IMAGE_TAG: "latest"
-  DOCKER_IMAGE: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.IMAGE_REPO_NAME }}:latest"
 
 jobs:
   build-image:
@@ -47,11 +46,11 @@ jobs:
           aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
       - name: Push Docker image to Amazon ECR
-        run: docker push $DOCKER_IMAGE
+        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
 
       - name: Generate imagedefinitions.json
         run: |
-          printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $DOCKER_IMAGE > imagedefinitions.json
+          printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest > imagedefinitions.json
 
   upload-imagedefinitions:
     name: Upload imagedefinitions.json to S3
