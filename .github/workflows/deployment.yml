@@ -62,6 +62,7 @@ jobs:
         run: |
           cd lambda/ 
           zip lambda_function_payload.zip index.py
+          mv lambda_function_payload.zip ../
 
       - name: Upload Lambda function to S3
         run: aws s3 cp lambda_function_payload.zip s3://$S3_BUCKET_ARTIFACTS/image-recognition-lambda/
