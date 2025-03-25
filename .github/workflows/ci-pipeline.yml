@@ -6,7 +6,6 @@ on:
       - develop
 
 env:
-  CodeBuildRunner: "codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}"
   S3_BUCKET: "set-cicd-artifacts"
   UNIT_TEST_REPORTS: "unit-test-results"
   TEST_COV_REPORTS: "test-coverage-reports"
@@ -14,7 +13,7 @@ env:
 
 jobs:
   setup:
-    runs-on: ${{ env.CodeBuildRunner }}
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,7 +45,7 @@ jobs:
           key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
 
   linting:
-    runs-on: ${{ env.CodeBuildRunner }}
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     needs: setup
     steps:
       - name: Checkout code
@@ -75,14 +74,14 @@ jobs:
 
       - name: Status of linting check
         run: |
-          if [ "$STATUS_FAIL" -eq 1 ]; then 
+          if [[ -n "$STATUS_FAIL" && "$STATUS_FAIL" -eq 1 ]]; then  
             exit 1
           else
             exit 0
           fi
 
   unit-tests:
-    runs-on: ${{ env.CodeBuildRunner }}
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     needs: linting
     steps:
       - name: Checkout code
