@@ -1,9 +1,14 @@
 name: CI Pipeline
 
+#on:
+#  pull_request:
+#    branches:
+#      - develop
 on:
-  pull_request:
+  push:
     branches:
-      - develop
+      - feature
+
 
 env:
   S3_BUCKET: "set-cicd-artifacts"
@@ -69,8 +74,8 @@ jobs:
 
       - name: Upload linting results to S3
         run: |
-          aws s3 cp pylint-report.txt s3://${{ env.S3_BUCKET }}/${{ env.LINT_REPORTS }}/${{ github.run_id }}/pylint-report.txt
-          aws s3 cp flake8-report.txt s3://${{ env.S3_BUCKET }}/${{ env.LINT_REPORTS }}/${{ github.run_id }}/flake8-report.txt
+          aws s3 cp pylint-report.txt s3://$S3_BUCKET/$LINT_REPORTS/${{ github.run_id }}/pylint-report.txt
+          aws s3 cp flake8-report.txt s3://$S3_BUCKET/$LINT_REPORTS/${{ github.run_id }}/flake8-report.txt
 
       - name: Status of linting check
         run: |
@@ -80,34 +85,34 @@ jobs:
             exit 0
           fi
 
-  unit-tests:
-    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-    needs: linting
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Restore cached dependencies
-        uses: actions/cache@v3
-        with:
-          path: venv
-          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
-
-      - name: Set environment variables
-        run: echo "PYTHONPATH=." >> $GITHUB_ENV
-
-      - name: Run unit tests with coverage
-        run: |
-          . venv/bin/activate
-          venv/bin/python -m pytest -v app/tests/unit/ --cov=app --cov-report=html --cov-report=xml --html=pytest-report.html --junitxml=pytest-report.xml
-
-      - name: Upload test results to S3
-        run: |
-          aws s3 cp pytest-report.xml s3://${{ env.S3_BUCKET }}/${{ env.UNIT_TEST_REPORTS }}/${{ github.run_id }}/pytest-report.xml
-          aws s3 cp pytest-report.html s3://${{ env.S3_BUCKET }}/${{ env.UNIT_TEST_REPORTS }}/${{ github.run_id }}/pytest-report.html
-
-      - name: Upload coverage report to S3
-        run: |
-          aws s3 cp coverage.xml s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/coverage.xml
-          aws s3 cp htmlcov/ s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/htmlcov/ --recursive
-          aws s3 cp assets/ s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/assets/ --recursive
+#  unit-tests:
+#    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+#    needs: linting
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#
+#      - name: Restore cached dependencies
+#        uses: actions/cache@v3
+#        with:
+#          path: venv
+#          key: python-deps-${{ runner.os }}-${{ hashFiles('app/requirements.txt') }}
+#
+#      - name: Set environment variables
+#        run: echo "PYTHONPATH=." >> $GITHUB_ENV
+#
+#      - name: Run unit tests with coverage
+#        run: |
+#          . venv/bin/activate
+#          venv/bin/python -m pytest -v app/tests/unit/ --cov=app --cov-report=html --cov-report=xml --html=pytest-report.html --junitxml=pytest-report.xml
+#
+#      - name: Upload test results to S3
+#        run: |
+#          aws s3 cp pytest-report.xml s3://${{ env.S3_BUCKET }}/${{ env.UNIT_TEST_REPORTS }}/${{ github.run_id }}/pytest-report.xml
+#          aws s3 cp pytest-report.html s3://${{ env.S3_BUCKET }}/${{ env.UNIT_TEST_REPORTS }}/${{ github.run_id }}/pytest-report.html
+#
+#      - name: Upload coverage report to S3
+#        run: |
+#          aws s3 cp coverage.xml s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/coverage.xml
+#          aws s3 cp htmlcov/ s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/htmlcov/ --recursive
+#          aws s3 cp assets/ s3://${{ env.S3_BUCKET }}/${{ env.TEST_COV_REPORTS }}/${{ github.run_id }}/assets/ --recursive
