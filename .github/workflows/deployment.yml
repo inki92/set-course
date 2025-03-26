@@ -12,10 +12,6 @@ env:
   AWS_REGION: "eu-central-1"
   AWS_ACCOUNT_ID: "692859924835"
   IMAGE_REPO_NAME: "imagerecrepo"
-  ECS_CLUSTER_NAME_DEV: "ECSRecAppClusterDev"
-  ECS_SERVICE_NAME_DEV: "ECSServiceRecAppDev"
-  ECS_CONTAINER_NAME_DEV: "RekImageDev"
-  S3_BUCKET_NAME_DEV: "image-rek-bucket-dev"
   S3_BUCKET_ARTIFACTS: "set-cicd-artifacts"
   LAMBDA_NAME_DEV: "lambda_script_dev"
   IMAGE_TAG: "latest"
@@ -38,17 +34,10 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t $IMAGE_REPO_NAME app
-          docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
 
       - name: Push Docker image to Amazon ECR
-        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
-
-      - name: Generate imagedefinitions.json
-        run: |
-          printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest > imagedefinitions.json
-
-      - name: Upload imagedefinitions.json to S3
-        run: aws s3 cp imagedefinitions.json s3://$S3_BUCKET_ARTIFACTS/imagedefinitions/imagedefinitions.json
+        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:IMAGE_TAG
 
   upload-deploy-lambda:
     name: Package and Upload Lambda
@@ -69,13 +58,3 @@ jobs:
       - name: Deploy Lambda function
         run: |
           aws lambda update-function-code --function-name $LAMBDA_NAME_DEV --s3-bucket $S3_BUCKET_ARTIFACTS --s3-key image-recognition-lambda/lambda_function_payload.zip
-
-# NOT TESTED, USED AWS_PIPELINE
-#  blue-green-deployment:
-#    name: Blue-Green Deployment on ECS Fargate
-#    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-#    needs: build-push-image
-#    steps:
-#      - name: Update ECS Service to Use New Image
-#        run: |
-#          aws ecs update-service --cluster $ECS_CLUSTER_NAME_DEV --service $ECS_SERVICE_NAME_DEV --force-new-deployment
