@@ -1,12 +1,12 @@
 name: Deployment Pipeline
 
 on:
-#  push:
-#    branches:
-#      - develop
   push:
     branches:
-      - feature
+      - develop
+#  push:
+#    branches:
+#      - feature
 
 env:
   AWS_REGION: "eu-central-1"
@@ -21,35 +21,34 @@ env:
   IMAGE_TAG: "latest"
 
 jobs:
-# tested !!!!!
-#  build-push-image:
-#    name: Build and Publish Docker Image
-#    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-#    steps:
-#      - name: Checkout repository
-#        uses: actions/checkout@v4
-#
-#      - name: Set up Docker Buildx
-#        uses: docker/setup-buildx-action@v2
-#
-#      - name: Login to Amazon ECR
-#        run: |
-#          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-#
-#      - name: Build Docker image
-#        run: |
-#          docker build -t $IMAGE_REPO_NAME app
-#          docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
-#
-#      - name: Push Docker image to Amazon ECR
-#        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
-#
-#      - name: Generate imagedefinitions.json
-#        run: |
-#          printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest > imagedefinitions.json
-#
-#      - name: Upload imagedefinitions.json to S3
-#        run: aws s3 cp imagedefinitions.json s3://$S3_BUCKET_ARTIFACTS/imagedefinitions/imagedefinitions.json
+  build-push-image:
+    name: Build and Publish Docker Image
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          docker build -t $IMAGE_REPO_NAME app
+          docker tag $IMAGE_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+
+      - name: Push Docker image to Amazon ECR
+        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest
+
+      - name: Generate imagedefinitions.json
+        run: |
+          printf '[{"name":"%s","imageUri":"%s"}]' $ECS_CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:latest > imagedefinitions.json
+
+      - name: Upload imagedefinitions.json to S3
+        run: aws s3 cp imagedefinitions.json s3://$S3_BUCKET_ARTIFACTS/imagedefinitions/imagedefinitions.json
 
   upload-deploy-lambda:
     name: Package and Upload Lambda
@@ -60,7 +59,7 @@ jobs:
 
       - name: Zip Lambda function
         run: |
-          cd lambda/ 
+          cd lambda/
           zip lambda_function_payload.zip index.py
           mv lambda_function_payload.zip ../
 
@@ -71,11 +70,12 @@ jobs:
         run: |
           aws lambda update-function-code --function-name $LAMBDA_NAME_DEV --s3-bucket $S3_BUCKET_ARTIFACTS --s3-key image-recognition-lambda/lambda_function_payload.zip
 
+# NOT TESTED, USED AWS_PIPELINE
 #  blue-green-deployment:
 #    name: Blue-Green Deployment on ECS Fargate
 #    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-#    needs: upload-imagedefinitions
+#    needs: build-push-image
 #    steps:
 #      - name: Update ECS Service to Use New Image
 #        run: |
-#          aws ecs update-service --cluster $ECS_CLUSTER_NAME --service $ECS_SERVICE_NAME --force-new-deployment
+#          aws ecs update-service --cluster $ECS_CLUSTER_NAME_DEV --service $ECS_SERVICE_NAME_DEV --force-new-deployment
