@@ -5,24 +5,15 @@ on:
     branches:
       - develop
 
-env:
-  S3_BUCKET_ARTIFACTS: "set-cicd-artifacts"
-
 jobs:
-#  build-and-store:
-#    name: Build and Store Artifacts
-#    uses: ./.github/workflows/build_artifacts.yml
-#
+  build-and-store:
+    name: Build and Store Artifacts
+    uses: ./.github/workflows/build_artifacts.yml
 
   trigger-codepipeline-dev:
-    name: Deploy ECR image to DEV environment
-#    needs: [build-and-store]
+    name: Deploy ECR image to DEV and QA environment
+    needs: [build-and-store]
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Trigger AWS CodePipeline
         run: aws codepipeline start-pipeline-execution --name deploy-env-dev
-
-#  test-dev-env:
-#    name: Testing DEV environment
-#    needs: [trigger-codepipeline-dev]
-#    uses: ./.github/workflows/dev_env_test.yml
