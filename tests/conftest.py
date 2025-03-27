@@ -35,6 +35,7 @@ def terraform_data_dev():
         "lb_public_name": get_value(application["lb_public_name"])
     }
 
+
 @pytest.fixture(scope="session")
 def terraform_data_qa():
     """ Collect terraform data from QA env modules. """
@@ -44,19 +45,25 @@ def terraform_data_qa():
     environment = data['module'][0]['environment']
     application = data['module'][1]['application']
 
+    def get_value(value):
+        if isinstance(value, list):
+            return str(value[0])  # 1 value from the list
+        return str(value)
+
     return {
-        "dynamodb_name": str(environment["dynamodb_name"][0]),
-        "bucket_name": str(environment["bucket_name"][0]),
-        "sns_name": str(environment["sns_name"][0]),
-        "sqs_name": str(environment["sqs_name"][0]),
-        "sg_name": str(environment["sg_name"][0]),
-        "docker_image_uri": str(application["docker_image_uri"][0]),
-        "lambda_function_name": str(application["lambda_function_name"][0]),
-        "ecs_family_name": str(application["ecs_family_name"][0]),
-        "ecs_cluster_name": str(application["ecs_cluster_name"][0]),
-        "ecs_service_name": str(application["ecs_service_name"][0]),
-        "lb_public_name": str(application["lb_public_name"][0])
+        "dynamodb_name": get_value(environment["dynamodb_name"]),
+        "bucket_name": get_value(environment["bucket_name"]),
+        "sns_name": get_value(environment["sns_name"]),
+        "sqs_name": get_value(environment["sqs_name"]),
+        "sg_name": get_value(environment["sg_name"]),
+        "docker_image_uri": get_value(application["docker_image_uri"]),
+        "lambda_function_name": get_value(application["lambda_function_name"]),
+        "ecs_family_name": get_value(application["ecs_family_name"]),
+        "ecs_cluster_name": get_value(application["ecs_cluster_name"]),
+        "ecs_service_name": get_value(application["ecs_service_name"]),
+        "lb_public_name": get_value(application["lb_public_name"])
     }
+
 
 @pytest.fixture
 def lb_url_dev(terraform_data_dev):
@@ -79,6 +86,7 @@ def lb_url_dev(terraform_data_dev):
     except KeyError:
         assert False, "Could not find DNS name in the response."
 
+
 @pytest.fixture
 def lb_url_qa(terraform_data_qa):
     """ Collect QA env LB url. """
@@ -99,6 +107,7 @@ def lb_url_qa(terraform_data_qa):
         assert False, f"Load Balancer {lb_public_name} not found."
     except KeyError:
         assert False, "Could not find DNS name in the response."
+
 
 @pytest.fixture
 def test_image_path():
@@ -129,7 +138,10 @@ def cleanup_s3_buckets(terraform_data_dev, terraform_data_qa):
             response = s3_client.list_objects_v2(Bucket=bucket_name_dev)
             if 'Contents' in response:
                 for obj in response['Contents']:
-                    s3_client.delete_object(Bucket=bucket_name_dev, Key=obj['Key'])
+                    s3_client.delete_object(
+                        Bucket=bucket_name_dev,
+                        Key=obj['Key']
+                    )
             print(f"All objects from {bucket_name_dev} have been deleted.")
         except ClientError as e:
             print(f"Error deleting objects from bucket {bucket_name_dev}: {e}")
@@ -141,7 +153,10 @@ def cleanup_s3_buckets(terraform_data_dev, terraform_data_qa):
             response = s3_client.list_objects_v2(Bucket=bucket_name_qa)
             if 'Contents' in response:
                 for obj in response['Contents']:
-                    s3_client.delete_object(Bucket=bucket_name_qa, Key=obj['Key'])
+                    s3_client.delete_object(
+                        Bucket=bucket_name_qa,
+                        Key=obj['Key']
+                    )
             print(f"All objects from {bucket_name_qa} have been deleted.")
         except ClientError as e:
             print(f"Error deleting objects from bucket {bucket_name_qa}: {e}")
