@@ -27,7 +27,7 @@ jobs:
     
   trigger-codepipeline-dev:
     name: Deploy ECR image to DEV environment
-    needs: [build-and-store]
+#    needs: [build-and-store]
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Trigger AWS CodePipeline
