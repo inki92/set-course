@@ -1,2 +1,9 @@
-python-hcl2==5.1.1
 boto3==1.35.50
+botocore==1.35.50
+pytest==8.3.3
+pytest-cov==6.0.0
+pytest-cover==3.0.0
+pytest-coverage==0.0
+python-hcl2==5.1.1
+pytest-mock==3.14.0
+requests==2.32.3

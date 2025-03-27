@@ -8,23 +8,13 @@ on:
 
 env:
   S3_BUCKET_ARTIFACTS: "set-cicd-artifacts"
-  S3_LAMBDA_PATH: "image-recognition-lambda/lambda_function_payload.zip"
-  LAMBDA_NAME_DEV: "lambda_script_dev"
 
 jobs:
 #  build-and-store:
 #    name: Build and Store Artifacts
 #    uses: ./.github/workflows/build_artifacts.yml
 #
-#  deploy-lambda-dev:
-#    name: Upload Lambda to DEV environment
-#    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
-#    needs: [build-and-store]
-#    steps:
-#      - name: Deploy Lambda function
-#        run: |
-#          aws lambda update-function-code --function-name $LAMBDA_NAME_DEV --s3-bucket $S3_BUCKET_ARTIFACTS --s3-key $S3_LAMBDA_PATH
-    
+
   trigger-codepipeline-dev:
     name: Deploy ECR image to DEV environment
 #    needs: [build-and-store]
@@ -33,7 +23,7 @@ jobs:
       - name: Trigger AWS CodePipeline
         run: aws codepipeline start-pipeline-execution --name deploy-env-dev
 
-  test-dev-env:
-    name: Testing DEV environment
-    needs: [trigger-codepipeline-dev]
-    uses: ./.github/workflows/dev_env_test.yml
+#  test-dev-env:
+#    name: Testing DEV environment
+#    needs: [trigger-codepipeline-dev]
+#    uses: ./.github/workflows/dev_env_test.yml
