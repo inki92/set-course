@@ -2,8 +2,9 @@ import hcl2
 
 def terraform_data_dev():
     """ Collect terraform data from DEV env modules. """
-    with open("tests/test_data/tf-dev/main.tf", "r") as f:
+    with open("tests/test_data/tf-dev/main.tf", "r", encoding="utf-8") as f:
         data = hcl2.load(f)
+    print(data)
 
     environment = data['module'][0]['environment']
     application = data['module'][1]['application']
