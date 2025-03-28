@@ -16,4 +16,4 @@ jobs:
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Trigger AWS CodePipeline
-        run: aws codepipeline start-pipeline-execution --name deploy-env-dev
+        run: aws codepipeline start-pipeline-execution --name deployment
