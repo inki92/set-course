@@ -25,12 +25,11 @@ def image_id(lb_url_dev, test_image_path):
                 # Raise an exception if the connection limit is reached
                 raise e
             connection_try += 1
-            time.sleep(10)
-
+            time.sleep(20)
+    time.sleep(10)
     with open(test_image_path, "rb") as f:
         files = {"file": f}
         response = requests.post(f"http://{lb_url_dev}/image", files=files)
-    time.sleep(5)
 
     assert response.status_code == 200
     assert response.text.startswith("Image uploaded: ID: ")
