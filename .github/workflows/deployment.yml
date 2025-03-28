@@ -11,7 +11,7 @@ jobs:
     uses: ./.github/workflows/build_artifacts.yml
 
   trigger-codepipeline-dev:
-    name: Deploy and Test ECR image to DEV and QA environment
+    name: Deploy and Test ECR image and Lambda to DEV and QA environment
     needs: [build-and-store]
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
