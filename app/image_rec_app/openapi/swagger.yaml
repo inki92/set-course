@@ -1,0 +1,201 @@
+openapi: 3.0.2
+info:
+  title: Image Recognition Application
+  version: 1.0.0
+  description: API for managing and searching images.
+
+servers:
+  - url: /
+
+paths:
+  /image:
+    get:
+      summary: Search for images
+      description: Searches for images by label.
+      operationId: image_rec_app.services.image_service.ImageService.search
+      parameters:
+        - in: query
+          name: label_query
+          schema:
+            type: string
+          description: The label to search for in images.
+      responses:
+        '200':
+          description: List of matching images.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matching_ids:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: Invalid request parameters.
+        '404':
+          description: No images found with the specified label.
+
+    post:
+      summary: Upload an image
+      description: Uploads an image file.
+      operationId: image_rec_app.services.image_service.ImageService.create
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file to upload.
+      responses:
+        '200':
+          description: Image successfully uploaded.
+        '400':
+          description: No file provided.
+        '500':
+          description: Internal server error.
+
+  /image/{id}:
+    get:
+      summary: Get image details
+      description: Retrieves image metadata by ID.
+      operationId: image_rec_app.services.image_service.ImageService.get
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image metadata retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ID:
+                    type: string
+                  LabelValue:
+                    type: string
+                  ImageName:
+                    type: string
+        '404':
+          description: Image not found.
+        '500':
+          description: Internal server error.
+
+    patch:
+      summary: Update image metadata
+      description: Updates metadata for an existing image.
+      operationId: image_rec_app.services.image_service.ImageService.update_data_image
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the image to update metadata for.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                labels:
+                  type: array
+                  items:
+                    type: string
+                  description: New labels for the image.
+                status:
+                  type: string
+                  description: New status for the image.
+                object_path:
+                  type: string
+                  description: New path for the image.
+      responses:
+        '204':
+          description: Image metadata successfully updated.
+        '404':
+          description: Image not found.
+        '400':
+          description: No fields to update.
+        '500':
+          description: Internal server error.
+    delete:
+      summary: Delete an image
+      description: Deletes an image by ID.
+      operationId: image_rec_app.services.image_service.ImageService.delete
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image deleted successfully.
+        '404':
+          description: Image not found.
+        '500':
+          description: Internal server error.
+
+  /image/file/{id}:
+    get:
+      summary: Download image file
+      description: Downloads an image file by ID.
+      operationId: image_rec_app.services.image_service.ImageService.download
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Image file downloaded successfully.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Image file not found.
+        '500':
+          description: Internal server error.
+    patch:
+      summary: Update an existing image
+      description: Replaces an image file in the S3 bucket with a new file at the specified ID.
+      operationId: image_rec_app.services.image_service.ImageService.update_file_image
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The ID of the image to update.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: New image file to replace the existing one.
+      responses:
+        '200':
+          description: Image successfully updated.
+        '404':
+          description: Image not found.
+        '400':
+          description: No file provided.
+        '500':
+          description: Internal server error.

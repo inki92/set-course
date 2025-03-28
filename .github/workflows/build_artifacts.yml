@@ -1,0 +1,51 @@
+name: Build and Store Artifacts Pipeline
+
+on:
+  workflow_call:
+
+env:
+  AWS_REGION: "eu-central-1"
+  AWS_ACCOUNT_ID: "692859924835"
+  IMAGE_REPO_NAME: "imagerecrepo"
+  S3_BUCKET_ARTIFACTS: "set-cicd-artifacts"
+  S3_LAMBDA_PATH: "image-recognition-lambda"
+  IMAGE_TAG: "latest"
+
+jobs:
+  build-push-image:
+    name: Build and Publish Docker Image
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          docker build -t $IMAGE_REPO_NAME app
+          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+      - name: Push Docker image to Amazon ECR
+        run: docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+  upload-store-lambda:
+    name: Package and Store Lambda
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Zip Lambda function
+        run: |
+          cd lambda/
+          zip lambda_function_payload.zip index.py
+          mv lambda_function_payload.zip ../
+
+      - name: Upload Lambda function to S3
+        run: aws s3 cp lambda_function_payload.zip s3://$S3_BUCKET_ARTIFACTS/$S3_LAMBDA_PATH/

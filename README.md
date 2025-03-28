@@ -1,7 +1,6 @@
 # Image Recognition Application
 
-Practice task for SET Advanced course.
-
+Practice task for SET Advanced course
 
 ## Tool and Technologies:
 1. Python 3
@@ -12,6 +11,7 @@ Practice task for SET Advanced course.
 6. checkov - terrafrom static code analysis tool
 7. tflint - terrafrom static code analysis tool
 8. tfsec - terrafrom static code analysis tool
+9. Amazon Web Services - cloud provider
 
 ## Cloud native application
 ### How to run in the local environment:

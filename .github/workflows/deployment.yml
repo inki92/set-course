@@ -1,0 +1,19 @@
+name: Deployment Pipeline Development Branch
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build-and-store:
+    name: Build and Store Artifacts
+    uses: ./.github/workflows/build_artifacts.yml
+
+  trigger-codepipeline-dev:
+    name: Deploy and Test ECR image and Lambda to DEV and QA environment
+    needs: [build-and-store]
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Trigger AWS CodePipeline
+        run: aws codepipeline start-pipeline-execution --name deployment
