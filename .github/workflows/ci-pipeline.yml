@@ -4,6 +4,13 @@ on:
   pull_request:
     branches:
       - develop
+      - hotfix
+
+env:
+  S3_BUCKET: "set-cicd-artifacts"
+  UNIT_TEST_REPORTS: "unit-test-results"
+  TEST_COV_REPORTS: "test-coverage-reports"
+  LINT_REPORTS: "linting-results"
 
 jobs:
   setup:
@@ -63,12 +70,12 @@ jobs:
 
       - name: Upload linting results to S3
         run: |
-          aws s3 cp pylint-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/pylint-report.txt
-          aws s3 cp flake8-report.txt s3://set-cicd-artifacts/linting-results/${{ github.run_id }}/flake8-report.txt
+          aws s3 cp pylint-report.txt s3://$S3_BUCKET/$LINT_REPORTS/${{ github.run_id }}/pylint-report.txt
+          aws s3 cp flake8-report.txt s3://$S3_BUCKET/$LINT_REPORTS/${{ github.run_id }}/flake8-report.txt
 
       - name: Status of linting check
         run: |
-          if [ "$STATUS_FAIL" -eq 1 ]; then 
+          if [[ -n "$STATUS_FAIL" && "$STATUS_FAIL" -eq 1 ]]; then  
             exit 1
           else
             exit 0
@@ -97,11 +104,11 @@ jobs:
 
       - name: Upload test results to S3
         run: |
-          aws s3 cp pytest-report.xml s3://set-cicd-artifacts/unit-test-results/${{ github.run_id }}/pytest-report.xml
-          aws s3 cp pytest-report.html s3://set-cicd-artifacts/unit-test-results/${{ github.run_id }}/pytest-report.html
+          aws s3 cp pytest-report.xml s3://$S3_BUCKET/$UNIT_TEST_REPORTS/${{ github.run_id }}/pytest-report.xml
+          aws s3 cp pytest-report.html s3://$S3_BUCKET/$UNIT_TEST_REPORTS/${{ github.run_id }}/pytest-report.html
 
       - name: Upload coverage report to S3
         run: |
-          aws s3 cp coverage.xml s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/coverage.xml
-          aws s3 cp htmlcov/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/htmlcov/ --recursive
-          aws s3 cp assets/ s3://set-cicd-artifacts/test-coverage-reports/${{ github.run_id }}/assets/ --recursive
+          aws s3 cp coverage.xml s3://$S3_BUCKET/$TEST_COV_REPORTS/${{ github.run_id }}/coverage.xml
+          aws s3 cp htmlcov/ s3://$S3_BUCKET/$TEST_COV_REPORTS/${{ github.run_id }}/htmlcov/ --recursive
+          aws s3 cp assets/ s3://$S3_BUCKET/$TEST_COV_REPORTS/${{ github.run_id }}/assets/ --recursive

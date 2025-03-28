@@ -1,0 +1,19 @@
+name: Deployment Pipeline Release Branch
+
+on:
+  pull_request:
+    branches:
+      - release
+
+jobs:
+  build-and-store:
+    name: Build and Store Artifacts
+    uses: ./.github/workflows/build_artifacts.yml
+
+  trigger-codepipeline-qa:
+    name: Deploy and Test ECR image to QA environment
+    needs: [build-and-store]
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Trigger AWS CodePipeline
+        run: aws codepipeline start-pipeline-execution --name deploy-qa
