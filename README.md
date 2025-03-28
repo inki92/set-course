@@ -2,7 +2,6 @@
 
 Practice task for SET Advanced course.
 
-
 ## Tool and Technologies:
 1. Python 3
 2. Flask - Python micro web framework
