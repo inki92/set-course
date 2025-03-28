@@ -1,0 +1,48 @@
+name: Deployment Pipeline Main Branch
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  S3_BUCKET: "set-cicd-artifacts"
+  LAMBDA_NAME: "lambda_script_prod"
+  ECS_CLUSTER_NAME: "ECSRecAppClusterProd"
+  ECS_SERVICE_NAME: "ECSServiceRecAppProd"
+  PATH_TO_IMAGEDEF: "imagedefinitions/prod/imagedefinitions.json"
+
+jobs:
+  build-and-store:
+    name: Build and Store Artifacts
+    uses: ./.github/workflows/build_artifacts.yml
+
+  deploy-lambda:
+    name: Deploy Lambda Function to PROD
+    needs: [build-and-store]
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Deploy Lambda
+        run: |
+          aws lambda update-function-code --function-name $LAMBDA_NAME --s3-bucket $S3_BUCKET --s3-key image-recognition-lambda/lambda_function_payload.zip
+
+  deploy-ecr-to-ecs:
+    name: Deploy ECR image to ECS cluster
+    needs: [build-and-store]
+    runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Register new Task Definition
+        run: |
+          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://$PATH_TO_IMAGEDEF --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
+      - name: Update ECS Service with new Task Definition
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER_NAME \
+            --service $ECS_SERVICE_NAME \
+            --task-definition $TASK_DEF_ARN \
+            --force-new-deployment

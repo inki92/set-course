@@ -11,9 +11,27 @@ jobs:
     uses: ./.github/workflows/build_artifacts.yml
 
   trigger-codepipeline-qa:
-    name: Deploy and Test ECR image to QA environment
+    name: Deploy and Test ECR image and Lambda to QA environment
     needs: [build-and-store]
     runs-on: codebuild-ImageRecApp-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Trigger AWS CodePipeline
-        run: aws codepipeline start-pipeline-execution --name deploy-qa
+        id: start_pipeline
+        run: |
+          PIPELINE_EXECUTION_ID=$(aws codepipeline start-pipeline-execution --name deploy-qa --query 'pipelineExecutionId' --output text)
+          echo "PIPELINE_EXECUTION_ID=${PIPELINE_EXECUTION_ID}" >> $GITHUB_ENV
+
+      - name: Wait for CodePipeline to Complete
+        run: |
+          STATUS="InProgress"
+          while [ "$STATUS" == "InProgress" ]; do
+            sleep 30
+            STATUS=$(aws codepipeline get-pipeline-execution --pipeline-name deploy-qa --pipeline-execution-id $PIPELINE_EXECUTION_ID --query 'pipelineExecution.status' --output text)
+            echo "Current Status: $STATUS"
+            if [[ "$STATUS" == "Succeeded" ]]; then
+              exit 0
+            elif [[ "$STATUS" == "Failed" || "$STATUS" == "Stopped" ]]; then
+              echo "Pipeline execution failed!"
+              exit 1
+            fi
+          done
