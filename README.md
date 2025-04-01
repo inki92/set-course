@@ -1,6 +1,6 @@
 # Image Recognition Application
 
-Practice task for SET Advanced course.
+Practice task for SET Advanced course
 
 ## Tool and Technologies:
 1. Python 3
