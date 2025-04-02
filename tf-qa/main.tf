@@ -43,6 +43,7 @@ module "application" {
   docker_container_name        = "RekImageQA"
   ecs_family_name              = "ECSRecoginitonAppQA"
   ecs_task_name                = "ECSRecAppQA"
+  ecs_desired_count            = 1
   ecs_task_memory              = 3072
   ecs_task_cpu                 = 1024
   ecs_task_role_name           = "ECSTaskRoleQA"

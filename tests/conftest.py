@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 @pytest.fixture(scope="session")
 def terraform_data_dev():
     """ Collect terraform data from DEV env modules. """
-    with open("tests/test_data/tf-dev/main.tf", "r", encoding="utf-8") as f:
+    with open("tf-dev/main.tf", "r", encoding="utf-8") as f:
         data = hcl2.load(f)
 
     environment = data['module'][0]['environment']
@@ -39,7 +39,7 @@ def terraform_data_dev():
 @pytest.fixture(scope="session")
 def terraform_data_qa():
     """ Collect terraform data from QA env modules. """
-    with open("tests/test_data/tf-qa/main.tf", "r") as f:
+    with open("tf-qa/main.tf", "r") as f:
         data = hcl2.load(f)
 
     environment = data['module'][0]['environment']

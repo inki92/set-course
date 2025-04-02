@@ -43,6 +43,7 @@ module "application" {
   docker_container_name        = "RekImageDev"
   ecs_family_name              = "ECSRecoginitonAppDev"
   ecs_task_name                = "ECSRecAppDev"
+  ecs_desired_count            = 1
   ecs_task_memory              = 3072
   ecs_task_cpu                 = 1024
   ecs_task_role_name           = "ECSTaskRoleDev"
